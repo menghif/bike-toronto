@@ -8,6 +8,7 @@ const url = "https://tor.publicbikesystem.net/ube/gbfs/v1/en/station_information
 
 interface Station {
   station_id: number;
+  name: string;
   lat: number;
   lon: number;
 }
@@ -27,7 +28,7 @@ export default function BikeMap() {
             <div key={station.station_id}>
             <Marker
             position={[station.lat, station.lon]}>
-            <PopupComponent stationId={station.station_id} />
+            <PopupComponent stationId={station.station_id} stationName={station.name} />
             </Marker>
             </div>)
         )}
