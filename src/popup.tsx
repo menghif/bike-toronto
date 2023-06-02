@@ -9,6 +9,10 @@ interface Station {
   station_id: number;
   station_name: string;
   num_bikes_available: number;
+  num_bikes_available_types: {
+    mechanical: number;
+    ebike: number;
+  }
   num_docks_available: number;
 }
 
@@ -31,7 +35,8 @@ const PopupComponent: React.FC<MyComponentProps> = ({ stationId, stationName }) 
 
   return <Popup>
     <p><b>{stationName}</b></p>
-    <p>Bikes available: {station1 ? station1.num_bikes_available : "???"}
+    <p>Bikes available: {station1 ? station1.num_bikes_available_types.mechanical : "???"}
+      <br/>E-Bikes available: {station1 ? station1.num_bikes_available_types.ebike : "???"}
       <br/>Docks available: {station1 ? station1.num_docks_available : "???"}</p>
       <LinearProgress determinate value={station1 ? percentBikesAvailable(station1.num_docks_available, station1.num_bikes_available) : 0} />
 
