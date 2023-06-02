@@ -19,7 +19,7 @@ export default function BikeMap() {
   const stations: Station[] = data && !error ? data?.data?.stations : [];
   return (
     <>
-      <MapContainer style={{ height: 600, width: '100%' }} id='map' center={[43.651070, -79.347015]} zoom={13} scrollWheelZoom={true}>
+      <MapContainer style={{ height: "100dvh" }} id='map' center={[43.651070, -79.347015]} zoom={13} scrollWheelZoom={true}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
