@@ -50,6 +50,7 @@ export default function BikeMap() {
   return (
     <>
       <MapContainer
+      attributionControl={false}
         style={{ height: "100dvh" }}
         id="map"
         center={[43.65107, -79.347015]}
