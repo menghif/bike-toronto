@@ -1,0 +1,54 @@
+/* Spinner from Codepen: https://codepen.io/poopsplat/pen/mVLqVp */
+
+html {
+  background-color: beige;
+}
+
+/* Center the container */
+#container {
+ position: absolute;
+ top: 50%;
+ left: 50%;
+ transform: translate(-50%, -50%);
+ padding: 10px;
+}
+
+img {
+  width: 200px;
+}
+
+@-webkit-keyframes spin-me{
+  0% {
+    -webkit-transform: rotateZ(0deg);
+    transform: rotateZ(0deg);
+  }
+  100% {
+    -webkit-transform: rotateZ(360deg);
+    transform: rotateZ(360deg);
+  }
+}
+
+@keyframes spin-me{
+  0% {
+    -webkit-transform: rotateZ(0deg);
+    transform: rotateZ(0deg);
+  }
+  100% {
+    -webkit-transform: rotateZ(360deg);
+    transform: rotateZ(360deg);
+  }
+}
+
+.thing-to-spin {
+  -webkit-animation-name: spin-me;
+  animation-name: spin-me;
+
+  -webkit-animation-iteration-count: infinite;
+  animation-iteration-count: infinite;
+
+  -webkit-animation-duration: 3s;
+  animation-duration: 3s;
+
+  -webkit-animation-timing-function: ease-in-out;
+  animation-timing-function: ease-in-out;
+}
