@@ -3,6 +3,7 @@ import useSwr from "swr";
 import PopupComponent from "./popup";
 import Loading from "./loading";
 import { useEffect, useState } from "react";
+import customIcon from "./customIcon";
 
 const fetcher = (...args: never[]) =>
   fetch(args[0], ...args.slice(1)).then((response) => response.json());
@@ -25,12 +26,12 @@ const useDelayedSWR = (
 
   useEffect(() => {
     if (!isLoading) {
-      return; // Loading state is already set to false
+      return;
     }
 
     const loadingTimer = setTimeout(() => {
       setLoading(false);
-    }, 1000); // Set your desired minimum loading time here
+    }, 500); // Minimum loading time
 
     return () => clearTimeout(loadingTimer);
   }, [isLoading]);
@@ -63,7 +64,7 @@ export default function BikeMap() {
         />
         {stations.map((station) => (
           <div key={station.station_id}>
-            <Marker position={[station.lat, station.lon]}>
+            <Marker position={[station.lat, station.lon]} icon={customIcon}>
               <PopupComponent
                 stationId={station.station_id}
                 stationName={station.name}
