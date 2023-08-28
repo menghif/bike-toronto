@@ -5,6 +5,9 @@ import Loading from "./loading";
 import { useEffect, useState } from "react";
 import customIcon from "./customIcon";
 
+// API key from https://rapidapi.com/
+const apiKey = import.meta.env.VITE_API_KEY
+
 const fetcher = (...args: never[]) =>
   fetch(args[0], ...args.slice(1)).then((response) => response.json());
 const url =
@@ -59,8 +62,7 @@ export default function BikeMap() {
         scrollWheelZoom={true}
       >
         <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          url={`https://retina-tiles.p.rapidapi.com/local/osm{r}/v1/{z}/{x}/{y}.png?rapidapi-key=${apiKey}`}
         />
         {stations.map((station) => (
           <div key={station.station_id}>
