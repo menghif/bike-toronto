@@ -30,6 +30,7 @@ const station_info_url =
   "https://tor.publicbikesystem.net/ube/gbfs/v1/en/station_status";
 
 let combinedStations = [];
+let sortedStations = [];
 
 fetch(stations_coord_url)
   .then((res) => {
@@ -76,6 +77,8 @@ fetch(stations_coord_url)
 
               return station;
             });
+            sortedStations = combinedStations.sort((a, b) => b.lat - a.lat);
+
             // console.log("Combined Stations:", combinedStations);
           } else {
             console.log("Invalid response format from second API.");
@@ -95,37 +98,41 @@ fetch(stations_coord_url)
   });
 
 map.on("load", () => {
-  var customMarker = new Image(40, 40);
-  customMarker.src = "/marker-icon.svg";
+  // var customMarker = document.createElement('div');
+  // customMarker.classList.add("custom-marker");
 
-  if (combinedStations) {
-    combinedStations.forEach((station) => {
-      const marker = new maplibregl.Marker()
-        .setLngLat([station.lon, station.lat])
-        .addTo(map)
-        .setPopup(
-          new maplibregl.Popup({
-            closeButton: true,
-            closeOnClick: true,
-          }).setHTML(createPopupContent(station))
-        );
+  if (sortedStations) {
+    sortedStations.forEach((station) => {
+      const marker = new maplibregl.Marker({
+        color: "#3A644B",
+        anchor: 'bottom',
+        offset: [0, 5]
+      })
+      .setLngLat([station.lon, station.lat])
+      .setPopup(
+        new maplibregl.Popup({
+          closeButton: true,
+          closeOnClick: true,
+        }).setHTML(createPopupContent(station))
+        )
+      .addTo(map);
 
-      station.marker = marker; // Store marker instance in combinedStations array
+      station.marker = marker; // Store marker instance in sortedStations array
     });
     // Set initial marker sizes based on zoom level
-    updateMarkerSizes();
+    // updateMarkerSizes();
 
     // Update marker sizes when the zoom level changes
-    map.on("zoom", () => {
-      updateMarkerSizes();
-    });
+    // map.on("zoom", () => {
+    //   updateMarkerSizes();
+    // });
   }
 });
 
 function updateMarkerSizes() {
   const zoom = map.getZoom();
   // console.log(zoom);
-  combinedStations.forEach((station) => {
+  sortedStations.forEach((station) => {
     const markerSize = getMarkerSize(zoom);
     const markerElement = station.marker.getElement();
 
