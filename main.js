@@ -6,8 +6,10 @@ const map = new maplibregl.Map({
   zoom: 10.5, // starting zoom
 });
 
-function createPopupContent(stationName) {
-  return `<h3>${stationName}</h3>`;
+function createPopupContent(station) {
+  return `<h1>${station.name}</h1>
+  <p>Available Bikes: ${station.num_bikes_available}</p>
+  <p>Available Docks: ${station.num_docks_available}</p>`;
 }
 
 // Add geolocate control to the map.
@@ -19,6 +21,8 @@ map.addControl(
     trackUserLocation: true,
   })
 );
+
+map.addControl(new maplibregl.NavigationControl());
 
 const stations_coord_url =
   "https://tor.publicbikesystem.net/ube/gbfs/v1/en/station_information";
@@ -40,9 +44,7 @@ fetch(stations_coord_url)
       //   "------------------ Stations Coordinates -----------------------"
       // );
       // console.log(data);
-      const stationIds = stationsCoords.map(
-        (station) => station.station_id
-      );
+      const stationIds = stationsCoords.map((station) => station.station_id);
 
       return fetch(station_info_url)
         .then((res) => {
@@ -67,10 +69,8 @@ fetch(stations_coord_url)
               if (matchingStation) {
                 return {
                   ...station,
-                  num_docks_available:
-                    matchingStation.num_docks_available,
-                  num_bikes_available:
-                    matchingStation.num_bikes_available,
+                  num_docks_available: matchingStation.num_docks_available,
+                  num_bikes_available: matchingStation.num_bikes_available,
                 };
               }
 
@@ -95,6 +95,9 @@ fetch(stations_coord_url)
   });
 
 map.on("load", () => {
+  var customMarker = new Image(40, 40);
+  customMarker.src = "/marker-icon.svg";
+
   if (combinedStations) {
     combinedStations.forEach((station) => {
       const marker = new maplibregl.Marker()
@@ -104,7 +107,7 @@ map.on("load", () => {
           new maplibregl.Popup({
             closeButton: true,
             closeOnClick: true,
-          }).setHTML(createPopupContent(station.name))
+          }).setHTML(createPopupContent(station))
         );
 
       station.marker = marker; // Store marker instance in combinedStations array
@@ -138,5 +141,5 @@ function updateMarkerSizes() {
 function getMarkerSize(zoom) {
   // Define your logic here to adjust the marker size based on the zoom level
   // Example: The marker size increases as the zoom level decreases
-  return zoom > 12 ? 35 : 25;
+  return zoom > 13 ? 20 : 12;
 }
