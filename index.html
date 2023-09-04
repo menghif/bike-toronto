@@ -12,8 +12,19 @@
       rel="stylesheet"
       href="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.css"
     />
-    <link rel="stylesheet" href="style.css" />
     <script src="https://unpkg.com/maplibre-gl@3.3.1/dist/maplibre-gl.js"></script>
+    <link rel="stylesheet" href="style.css" />
+    <style>
+      body {
+        margin: 0;
+        padding: 0;
+      }
+      html,
+      body,
+      #map {
+        height: 100%;
+      }
+    </style>
   </head>
   <body>
     <div id="map"></div>
