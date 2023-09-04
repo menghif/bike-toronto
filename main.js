@@ -1,7 +1,10 @@
+// API key from https://cloud.maptiler.com/account/keys/
+const apiKey = import.meta.env.VITE_API_KEY
+
 const map = new maplibregl.Map({
   container: "map", // container id
   style:
-    "https://api.maptiler.com/maps/streets/style.json?key=DdZLalB3JPwuIhjynQG1",
+    `https://api.maptiler.com/maps/streets/style.json?key=${apiKey}`,
   center: [-79.38, 43.7], // starting position
   zoom: 10.5, // starting zoom
 });
