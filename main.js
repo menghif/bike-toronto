@@ -7,9 +7,14 @@ const map = new maplibregl.Map({
 });
 
 function createPopupContent(station) {
-  return `<h1>${station.name}</h1>
-  <p>Available Bikes: ${station.num_bikes_available}</p>
-  <p>Available Docks: ${station.num_docks_available}</p>`;
+  const bikesAvailable =
+    station.num_bikes_available === 0 ? "zero" : "non-zero";
+  const docksAvailable =
+    station.num_docks_available === 0 ? "zero" : "non-zero";
+
+  return `<h1 class="station-name">${station.name}</h1>
+  <p class="num-bikes-available">Available Bikes: <span class="${bikesAvailable}">${station.num_bikes_available}</span></p>
+  <p class="num-docks-available">Available Docks: <span class="${docksAvailable}">${station.num_docks_available}</span></p>`;
 }
 
 // Add geolocate control to the map.
@@ -29,7 +34,7 @@ const stations_coord_url =
 const station_info_url =
   "https://tor.publicbikesystem.net/ube/gbfs/v1/en/station_status";
 
-let combinedStations = [];
+let combinedData = [];
 let sortedStations = [];
 
 fetch(stations_coord_url)
@@ -41,27 +46,18 @@ fetch(stations_coord_url)
     if (data && data.data.stations) {
       // Access the array of stations
       const stationsCoords = data.data.stations;
-      // console.log(
-      //   "------------------ Stations Coordinates -----------------------"
-      // );
-      // console.log(data);
-      const stationIds = stationsCoords.map((station) => station.station_id);
 
       return fetch(station_info_url)
         .then((res) => {
           return res.json();
         })
         .then((data) => {
-          // console.log(
-          //   "------------------ Available Space! -----------------------"
-          // );
-          // console.log(data);
-
+          // get number of bikes and number of docks available for each station
           if (data && data.data.stations) {
             const stationsInfo = data.data.stations;
 
             // Combine data from both APIs
-            combinedStations = stationsCoords.map((station) => {
+            combinedData = stationsCoords.map((station) => {
               const stationId = station.station_id;
               const matchingStation = stationsInfo.find(
                 (stationInfo) => stationInfo.station_id === stationId
@@ -77,15 +73,12 @@ fetch(stations_coord_url)
 
               return station;
             });
-            sortedStations = combinedStations.sort((a, b) => b.lat - a.lat);
-
-            // console.log("Combined Stations:", combinedStations);
+            sortedStations = combinedData.sort((a, b) => b.lat - a.lat);
           } else {
             console.log("Invalid response format from second API.");
           }
         })
         .catch((err) => {
-          // handle the error
           console.error(err);
         });
     } else {
@@ -93,60 +86,29 @@ fetch(stations_coord_url)
     }
   })
   .catch((err) => {
-    // handle the error
     console.error(err);
   });
 
 map.on("load", () => {
-  // var customMarker = document.createElement('div');
-  // customMarker.classList.add("custom-marker");
-
   if (sortedStations) {
     sortedStations.forEach((station) => {
-      const marker = new maplibregl.Marker({
-        color: "#3A644B",
-        anchor: 'bottom',
-        offset: [0, 5]
+      let markerColor = "#3A644B";
+      if (station.num_bikes_available <= 3) markerColor = "#759180";
+      if (station.num_bikes_available === 0) markerColor = "#EBEBEB";
+
+      new maplibregl.Marker({
+        color: markerColor,
+        anchor: "bottom",
+        offset: [0, 5],
       })
-      .setLngLat([station.lon, station.lat])
-      .setPopup(
-        new maplibregl.Popup({
-          closeButton: true,
-          closeOnClick: true,
-        }).setHTML(createPopupContent(station))
+        .setLngLat([station.lon, station.lat])
+        .setPopup(
+          new maplibregl.Popup({
+            closeButton: true,
+            closeOnClick: true,
+          }).setHTML(createPopupContent(station))
         )
-      .addTo(map);
-
-      station.marker = marker; // Store marker instance in sortedStations array
+        .addTo(map);
     });
-    // Set initial marker sizes based on zoom level
-    // updateMarkerSizes();
-
-    // Update marker sizes when the zoom level changes
-    // map.on("zoom", () => {
-    //   updateMarkerSizes();
-    // });
   }
 });
-
-function updateMarkerSizes() {
-  const zoom = map.getZoom();
-  // console.log(zoom);
-  sortedStations.forEach((station) => {
-    const markerSize = getMarkerSize(zoom);
-    const markerElement = station.marker.getElement();
-
-    // Update the SVG width and height attributes
-    const svgElement = markerElement.querySelector("svg"); // Assuming the SVG is the first child
-    if (svgElement) {
-      svgElement.setAttribute("width", markerSize);
-      // svgElement.setAttribute("height", markerSize);
-    }
-  });
-}
-
-function getMarkerSize(zoom) {
-  // Define your logic here to adjust the marker size based on the zoom level
-  // Example: The marker size increases as the zoom level decreases
-  return zoom > 13 ? 20 : 12;
-}
