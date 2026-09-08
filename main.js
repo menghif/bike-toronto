@@ -4,13 +4,20 @@ import {
   Marker,
   NavigationControl,
   Popup,
+  setWorkerUrl,
 } from "maplibre-gl";
+import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   combineStationData,
   createPopupContent,
   getMarkerColor,
 } from "./stations.js";
+
+// maplibre-gl's default worker lookup is relative to its own bundled
+// location, which doesn't survive Vite bundling into dist/. Point it at
+// the URL Vite actually emits for the worker file instead.
+setWorkerUrl(maplibreWorkerUrl);
 
 // API key from https://cloud.maptiler.com/account/keys/
 const apiKey = import.meta.env.VITE_API_KEY;
