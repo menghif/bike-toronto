@@ -25,9 +25,14 @@ const apiKey = import.meta.env.VITE_API_KEY;
 const map = new MapLibreMap({
   container: "map", // container id
   style: `https://api.maptiler.com/maps/streets/style.json?key=${apiKey}`,
-  center: [-79.38, 43.7], // starting position
-  zoom: 10.5, // starting zoom
+  center: [-79.38, 43.7],
+  zoom: 10.5,
+  dragRotate: false,
+  pitchWithRotate: false,
+  touchPitch: false,
 });
+
+map.touchZoomRotate.disableRotation();
 
 // Add geolocate control to the map.
 map.addControl(
@@ -39,7 +44,7 @@ map.addControl(
   })
 );
 
-map.addControl(new NavigationControl());
+map.addControl(new NavigationControl({ showCompass: false }));
 
 const stations_coord_url =
   "https://tor.publicbikesystem.net/ube/gbfs/v1/en/station_information";
