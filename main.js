@@ -6,7 +6,6 @@ import {
   Popup,
   setWorkerUrl,
 } from "maplibre-gl";
-import maplibreWorkerUrl from "maplibre-gl/dist/maplibre-gl-worker.mjs?url";
 import "maplibre-gl/dist/maplibre-gl.css";
 import {
   combineStationData,
@@ -15,9 +14,10 @@ import {
 } from "./stations.js";
 
 // maplibre-gl's default worker lookup is relative to its own bundled
-// location, which doesn't survive Vite bundling into dist/. Point it at
-// the URL Vite actually emits for the worker file instead.
-setWorkerUrl(maplibreWorkerUrl);
+// location, which doesn't survive Vite bundling into dist/. See the
+// maplibreWorkerAssets plugin in vite.config.js, which serves the worker
+// (and its sibling maplibre-gl-shared.mjs) at this fixed path instead.
+setWorkerUrl("/maplibre-gl-worker.mjs");
 
 // API key from https://cloud.maptiler.com/account/keys/
 const apiKey = import.meta.env.VITE_API_KEY;
