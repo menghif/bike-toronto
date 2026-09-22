@@ -52,3 +52,13 @@ GBFS feeds:
 
 `main.js` fetches both and merges them by `station_id` (see
 `combineStationData` in `stations.js`) before rendering markers.
+
+Bike lane geometry comes from the City of Toronto's
+[Cycling Network](https://open.toronto.ca/dataset/cycling-network/) open
+dataset, vendored locally at `public/cycling-network.geojson` rather than
+fetched live (it's ~3 MB and changes infrequently). To refresh it:
+
+```bash
+curl -o public/cycling-network.geojson \
+  "https://ckan0.cf.opendata.inter.prod-toronto.ca/dataset/abbe5ee3-e249-4f86-a219-f0022eaddcc9/resource/023da9a2-8848-4e10-9cad-e7f9119cd874/download/cycling-network-4326.geojson"
+```

@@ -92,7 +92,86 @@ fetch(stations_coord_url)
     console.error(err);
   });
 
+// Bike lane geometry from the City of Toronto's Cycling Network open
+// dataset (https://open.toronto.ca/dataset/cycling-network/), vendored
+// locally as public/cycling-network.geojson to avoid a ~3MB fetch from
+// the city's server on every page load. See README for how to refresh it.
 map.on("load", () => {
+  map.addSource("bike-lanes", {
+    type: "geojson",
+    data: "/cycling-network.geojson",
+  });
+
+  // Bike lanes and cycle tracks (regular, protected on-street infrastructure).
+  const bikeLaneTypes = [
+    "Cycle Track",
+    "Bi-Directional Cycle Track",
+    "Cycle Track - Contraflow",
+    "Bike Lane",
+    "Bike Lane - Contraflow",
+    "Bike Lane - Buffered",
+  ];
+  // Multi-use trails, off-street and generally wider/separated paths.
+  const trailTypes = [
+    "Multi-Use Trail",
+    "Multi-Use Trail - Entrance",
+    "Multi-Use Trail - Boulevard",
+    "Multi-Use Trail - Existing Connector",
+    "Multi-Use Trail - Connector",
+  ];
+
+  map.addLayer({
+    id: "bike-lanes",
+    type: "line",
+    source: "bike-lanes",
+    filter: [
+      "in",
+      ["get", "INFRA_HIGHORDER"],
+      ["literal", [...bikeLaneTypes, ...trailTypes]],
+    ],
+    layout: {
+      "line-join": "round",
+      "line-cap": "round",
+    },
+    paint: {
+      "line-width": ["interpolate", ["linear"], ["zoom"], 10, 1, 16, 4],
+      "line-color": [
+        "match",
+        ["get", "INFRA_HIGHORDER"],
+        bikeLaneTypes,
+        "#3aa655",
+        trailTypes,
+        "#1b5e20",
+        "#3aa655",
+      ],
+    },
+  });
+
+  // Sharrows and other shared-road infrastructure (no dedicated lane), drawn
+  // as a dotted light green line since cyclists share the roadway here.
+  map.addLayer({
+    id: "bike-lanes-shared",
+    type: "line",
+    source: "bike-lanes",
+    filter: [
+      "!",
+      [
+        "in",
+        ["get", "INFRA_HIGHORDER"],
+        ["literal", [...bikeLaneTypes, ...trailTypes]],
+      ],
+    ],
+    layout: {
+      "line-join": "round",
+      "line-cap": "round",
+    },
+    paint: {
+      "line-width": ["interpolate", ["linear"], ["zoom"], 10, 1, 16, 3],
+      "line-color": "#a5d6a7",
+      "line-dasharray": [1, 2],
+    },
+  });
+
   if (sortedStations) {
     sortedStations.forEach((station) => {
       new Marker({
