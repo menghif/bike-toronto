@@ -28,6 +28,14 @@
   cursor: pointer;
 }
 
+.station-pin {
+  display: none;
+}
+
+.show-pins .station-pin {
+  display: block;
+}
+
 p {
   margin: 0.3rem 0;
 }

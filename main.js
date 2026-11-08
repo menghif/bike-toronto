@@ -51,9 +51,14 @@ const stations_coord_url =
 const station_info_url =
   "https://tor.publicbikesystem.net/ube/gbfs/v1/en/station_status";
 
+// Below this zoom level stations are drawn as small circles (a WebGL layer)
+// instead of pins, so the dense downtown core doesn't become a pile of
+// overlapping markers when viewing the whole city.
+const PIN_MIN_ZOOM = 13;
+
 let sortedStations = [];
 
-fetch(stations_coord_url)
+const stationsLoaded = fetch(stations_coord_url)
   .then((res) => {
     // handle the response
     return res.json();
@@ -172,21 +177,79 @@ map.on("load", () => {
     },
   });
 
-  if (sortedStations) {
-    sortedStations.forEach((station) => {
-      new Marker({
-        color: getMarkerColor(station.num_bikes_available),
-        anchor: "bottom",
-        offset: [0, 5],
-      })
-        .setLngLat([station.lon, station.lat])
-        .setPopup(
-          new Popup({
-            closeButton: true,
-            closeOnClick: true,
-          }).setHTML(createPopupContent(station))
-        )
-        .addTo(map);
-    });
-  }
+  // Station data is fetched in parallel with the map style, so wait for it
+  // here rather than assuming it already arrived.
+  stationsLoaded.then(() => addStations());
 });
+
+function addStations() {
+  map.addSource("stations", {
+    type: "geojson",
+    data: {
+      type: "FeatureCollection",
+      features: sortedStations.map((station, index) => ({
+        type: "Feature",
+        id: index,
+        geometry: { type: "Point", coordinates: [station.lon, station.lat] },
+        properties: {
+          color: getMarkerColor(station.num_bikes_available),
+        },
+      })),
+    },
+  });
+
+  map.addLayer({
+    id: "stations-circles",
+    type: "circle",
+    source: "stations",
+    maxzoom: PIN_MIN_ZOOM,
+    paint: {
+      "circle-color": ["get", "color"],
+      "circle-radius": ["interpolate", ["linear"], ["zoom"], 10, 3, 13, 6],
+      "circle-stroke-color": "#1f3a2a",
+      "circle-stroke-width": 1,
+    },
+  });
+
+  map.on("click", "stations-circles", (e) => {
+    const feature = e.features[0];
+    const station = sortedStations[feature.id];
+    new Popup({ closeButton: true, closeOnClick: true })
+      .setLngLat(feature.geometry.coordinates)
+      .setHTML(createPopupContent(station))
+      .addTo(map);
+  });
+  map.on("mouseenter", "stations-circles", () => {
+    map.getCanvas().style.cursor = "pointer";
+  });
+  map.on("mouseleave", "stations-circles", () => {
+    map.getCanvas().style.cursor = "";
+  });
+
+  sortedStations.forEach((station) => {
+    new Marker({
+      color: getMarkerColor(station.num_bikes_available),
+      anchor: "bottom",
+      offset: [0, 5],
+      className: "station-pin",
+    })
+      .setLngLat([station.lon, station.lat])
+      .setPopup(
+        new Popup({
+          closeButton: true,
+          closeOnClick: true,
+        }).setHTML(createPopupContent(station))
+      )
+      .addTo(map);
+  });
+
+  // Pins are DOM elements, so toggle them with a class on the container
+  // instead of adding/removing hundreds of markers on every zoom.
+  const updatePinVisibility = () => {
+    map
+      .getContainer()
+      .classList.toggle("show-pins", map.getZoom() >= PIN_MIN_ZOOM);
+  };
+  map.on("zoom", updatePinVisibility);
+  updatePinVisibility();
+}
