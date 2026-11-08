@@ -36,6 +36,21 @@
   display: block;
 }
 
+.hide-stations .station-pin {
+  display: none;
+}
+
+.overlay-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #3a644b;
+}
+
+.overlay-toggle[aria-pressed="false"] {
+  color: #b0b0b0;
+}
+
 p {
   margin: 0.3rem 0;
 }

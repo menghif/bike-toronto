@@ -46,6 +46,96 @@ map.addControl(
 
 map.addControl(new NavigationControl({ showCompass: false }));
 
+// Which overlays the user wants visible. Layers may not exist yet when a
+// toggle is clicked (style or station data still loading), so this state is
+// re-applied whenever layers are added.
+const visibility = { stations: true, bikeLanes: true };
+
+const STATION_LAYERS = ["stations-circles"];
+const BIKE_LANE_LAYERS = ["bike-lanes", "bike-lanes-shared"];
+
+function applyVisibility() {
+  const setLayers = (ids, visible) => {
+    ids.forEach((id) => {
+      if (map.getLayer(id)) {
+        map.setLayoutProperty(id, "visibility", visible ? "visible" : "none");
+      }
+    });
+  };
+  setLayers(STATION_LAYERS, visibility.stations);
+  setLayers(BIKE_LANE_LAYERS, visibility.bikeLanes);
+  // Station pins are DOM markers, not map layers, so hide them via CSS.
+  map.getContainer().classList.toggle("hide-stations", !visibility.stations);
+  // Don't leave a popup floating over a station that's no longer shown.
+  if (!visibility.stations) closeStationPopup();
+}
+
+// The station popup currently open, if any (pins and circles both open one).
+let openStationPopup = null;
+
+function createStationPopup(station) {
+  const popup = new Popup({ closeButton: true, closeOnClick: true }).setHTML(
+    createPopupContent(station)
+  );
+  popup.on("open", () => {
+    openStationPopup = popup;
+  });
+  popup.on("close", () => {
+    if (openStationPopup === popup) openStationPopup = null;
+  });
+  return popup;
+}
+
+function closeStationPopup() {
+  openStationPopup?.remove();
+}
+
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape") closeStationPopup();
+});
+
+const STATIONS_ICON = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M12 2a7 7 0 0 0-7 7c0 5.25 7 13 7 13s7-7.75 7-13a7 7 0 0 0-7-7zm0 9.5A2.5 2.5 0 1 1 12 6.5a2.5 2.5 0 0 1 0 5z"/></svg>`;
+// "bike" icon from Lucide (https://lucide.dev/icons/bike), ISC license.
+const BIKE_LANES_ICON = `<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="18.5" cy="17.5" r="3.5"/><circle cx="5.5" cy="17.5" r="3.5"/><circle cx="15" cy="5" r="1"/><path d="M12 17.5V14l-3-3 4-3 2 3h2"/></svg>`;
+
+// Map control with on/off buttons for the station and bike lane overlays,
+// styled like (and stacked under) the zoom buttons.
+class OverlayToggleControl {
+  onAdd() {
+    this._container = document.createElement("div");
+    this._container.className = "maplibregl-ctrl maplibregl-ctrl-group";
+    this._addButton("stations", "stations", STATIONS_ICON);
+    this._addButton("bikeLanes", "bike lanes", BIKE_LANES_ICON);
+    return this._container;
+  }
+
+  _addButton(key, label, icon) {
+    const button = document.createElement("button");
+    button.type = "button";
+    button.className = "overlay-toggle";
+    button.innerHTML = icon;
+    const sync = () => {
+      const on = visibility[key];
+      button.setAttribute("aria-pressed", String(on));
+      button.title = `${on ? "Hide" : "Show"} ${label}`;
+      button.setAttribute("aria-label", button.title);
+    };
+    button.addEventListener("click", () => {
+      visibility[key] = !visibility[key];
+      sync();
+      applyVisibility();
+    });
+    sync();
+    this._container.appendChild(button);
+  }
+
+  onRemove() {
+    this._container.remove();
+  }
+}
+
+map.addControl(new OverlayToggleControl());
+
 const stations_coord_url =
   "https://tor.publicbikesystem.net/ube/gbfs/v1/en/station_information";
 const station_info_url =
@@ -179,6 +269,8 @@ map.on("load", () => {
 
   // Station data is fetched in parallel with the map style, so wait for it
   // here rather than assuming it already arrived.
+  applyVisibility();
+
   stationsLoaded.then(() => addStations());
 });
 
@@ -214,9 +306,8 @@ function addStations() {
   map.on("click", "stations-circles", (e) => {
     const feature = e.features[0];
     const station = sortedStations[feature.id];
-    new Popup({ closeButton: true, closeOnClick: true })
+    createStationPopup(station)
       .setLngLat(feature.geometry.coordinates)
-      .setHTML(createPopupContent(station))
       .addTo(map);
   });
   map.on("mouseenter", "stations-circles", () => {
@@ -234,12 +325,7 @@ function addStations() {
       className: "station-pin",
     })
       .setLngLat([station.lon, station.lat])
-      .setPopup(
-        new Popup({
-          closeButton: true,
-          closeOnClick: true,
-        }).setHTML(createPopupContent(station))
-      )
+      .setPopup(createStationPopup(station))
       .addTo(map);
   });
 
@@ -252,4 +338,5 @@ function addStations() {
   };
   map.on("zoom", updatePinVisibility);
   updatePinVisibility();
+  applyVisibility();
 }
